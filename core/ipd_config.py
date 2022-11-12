@@ -5,8 +5,8 @@ app = FastAPI()
 idp = FastAPIKeycloak(
     server_url="http://localhost:8080/auth",
     client_id="fapy",
-    client_secret="CPbW5J7Ge9pwgFatK4TuV71GVwiLgamv",
-    admin_client_secret="l1iBN1Ddv21kfwcCsYM5D2GaxvZmRA2O",
+    client_secret="XzuBCwsaaszhazCc1GNeUKPgTNc9hZAR",
+    admin_client_secret="tja7jaR7dqdHHacrGqY1aGH8FlsoSId4",
     realm="fapy",
     callback_uri="http://localhost:3000/callback"
 )

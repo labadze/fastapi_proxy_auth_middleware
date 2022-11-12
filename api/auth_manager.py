@@ -1,9 +1,14 @@
-from fastapi import APIRouter
+from typing import Union
+
+from fastapi import APIRouter, Header
 from fastapi.encoders import jsonable_encoder
 from starlette import status
-from starlette.responses import Response
+from starlette.responses import Response, JSONResponse
 
+from core.httpx_processor import end_session
 from core.ipd_config import idp
+from core.schemas import JWTProperties
+from core.utils import sign_jwt
 
 router = APIRouter(
     prefix="/public",
@@ -15,39 +20,67 @@ router = APIRouter(
 
 # Auth Flow
 
-@router.get("/login-link", tags=["auth-flow"])
-def login_redirect(response: Response):
-    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
-    response.headers['Access-Control-Allow-Methods'] = 'POST, PUT, PATCH, GET, DELETE, OPTIONS'
-    return jsonable_encoder({
-        "login_url": idp.login_uri
-    })
+@router.get("/login_link", tags=["auth-flow"])
+def login_redirect():
+    try:
+        login_url = idp.login_uri
+        return jsonable_encoder({
+            "login_url": login_url
+        })
+    except Exception as e:
+        print(e)
 
 
 @router.get("/callback", tags=["auth-flow"])
-def callback(session_state: str, code: str, response: Response):
-    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000/callback'
-    response.headers['Access-Control-Allow-Methods'] = 'POST, PUT, PATCH, GET, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Origin, Accept'
-    exchange_result = idp.exchange_authorization_code(session_state=session_state, code=code)
-    print(exchange_result)
-    if exchange_result is not None:
-        response.status_code = status.HTTP_201_CREATED
-        token = "PROXY_ACCESS_TOKEN"
-        response.set_cookie(
-            "Authorization",
-            value=f"Bearer {token}",
-            httponly=True,
-            secure=True,
-            samesite="none",
-            max_age=1800,
-            expires=1800,
-        )
+async def callback(session_state: str, code: str, response: Response):
+    try:
+        exchange_result = idp.exchange_authorization_code(session_state=session_state, code=code)
+        print(exchange_result)
+        if exchange_result is not None:
+            response.status_code = status.HTTP_201_CREATED
+            jwt_props = JWTProperties(
+                user_id="uno",
+                user_role="root",
+                audience="user",
+                expires_in=60 * 8
+            )
+            token = await sign_jwt(properties=jwt_props)
+            response = JSONResponse(content={
+                "success": True
+            })
+            response.set_cookie(
+                key="session_key",
+                value=token,
+                httponly=True,
+                secure=True,
+                samesite="none",
+                max_age=1800,
+                expires=1800,
+                path='/',
+                domain=None
+            )
+            return response
+    except Exception as e:
+        print(e)
+        response.status_code = status.HTTP_401_UNAUTHORIZED
         return {
-            "success": True
+            "success": False,
+            "error": e,
         }
 
 
-@router.get("/logout", tags=["auth-flow"])
+@router.delete("/delete_cookie", tags=["auth-flow"])
+async def delete_cookie(response: Response, keycloak_log_out_encoded_uri: Union[str, None] = Header(default=None)):
+    response.delete_cookie(key="session_key", path='/', domain=None)
+    response = JSONResponse(content={
+        "success": True
+    })
+    await end_session(logout_url=keycloak_log_out_encoded_uri)
+    return response
+
+
+@router.get("/log_out", tags=["auth-flow"])
 def logout():
-    return idp.logout_uri
+    return {
+        "log_out_url": idp.logout_uri
+    }
