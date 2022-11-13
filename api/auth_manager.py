@@ -37,7 +37,12 @@ async def callback(session_state: str, code: str, response: Response):
     try:
         exchange_result = idp.exchange_authorization_code(session_state=session_state, code=code)
         print(exchange_result)
+        # TODO decode token at back-end
+        # Store token in database
+        # Generate session token with inserted id
+        # Update value in database
         await decode_back_end_token(encoded=str(exchange_result).replace("Bearer ", ""))
+
         if exchange_result is not None:
             response.status_code = status.HTTP_201_CREATED
             jwt_props = JWTProperties(
