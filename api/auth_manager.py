@@ -1,3 +1,4 @@
+import base64
 from typing import Union
 
 from fastapi import APIRouter, Header
@@ -8,7 +9,7 @@ from starlette.responses import Response, JSONResponse
 from core.httpx_processor import end_session
 from core.ipd_config import idp
 from core.schemas import JWTProperties
-from core.utils import sign_jwt
+from core.utils import sign_jwt, decode_back_end_token
 
 router = APIRouter(
     prefix="/public",
@@ -36,6 +37,7 @@ async def callback(session_state: str, code: str, response: Response):
     try:
         exchange_result = idp.exchange_authorization_code(session_state=session_state, code=code)
         print(exchange_result)
+        await decode_back_end_token(encoded=str(exchange_result).replace("Bearer ", ""))
         if exchange_result is not None:
             response.status_code = status.HTTP_201_CREATED
             jwt_props = JWTProperties(
@@ -75,12 +77,13 @@ async def delete_cookie(response: Response, keycloak_log_out_encoded_uri: Union[
     response = JSONResponse(content={
         "success": True
     })
-    await end_session(logout_url=keycloak_log_out_encoded_uri)
+    await end_session(logout_url=base64.b64encode(keycloak_log_out_encoded_uri.encode('utf-8')).decode("utf-8"))
     return response
 
 
 @router.get("/log_out", tags=["auth-flow"])
 def logout():
+    # urllib.parse.quote("Müller".encode('utf8'))
     return {
         "log_out_url": idp.logout_uri
     }

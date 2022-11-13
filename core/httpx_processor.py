@@ -1,4 +1,4 @@
-import os
+# import os
 
 import httpx
 
@@ -11,4 +11,4 @@ async def end_session(logout_url: str):
         'content-type': 'application/json'
     }
     response = await httpx_async_client.get(url=logout_url, headers=headers)
-    print(response.json())
+    print(response)
