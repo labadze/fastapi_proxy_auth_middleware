@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.params import Cookie
 from starlette.middleware.cors import CORSMiddleware
 
-from api import auth_manager
+from api import auth_manager, item_manager, account_manager
 from core.database import database
 
 app = FastAPI()
@@ -21,6 +21,8 @@ app.add_middleware(
 )
 
 app.include_router(auth_manager.router)
+app.include_router(item_manager.router)
+app.include_router(account_manager.router)
 
 
 @app.get("/")

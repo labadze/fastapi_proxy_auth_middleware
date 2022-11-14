@@ -8,7 +8,7 @@ from starlette import status
 from db.db_ops import fetch_authorization_artefact_by_ext_id
 
 
-def check_http_cookies(session_key: Union[str, None] = Cookie(None)):
+async def check_http_cookies(session_key: Union[str, None] = Cookie(None)):
     options = {
         'verify_signature': False,
         'verify_exp': False,  # Skipping expiration date check
