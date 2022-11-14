@@ -1,5 +1,6 @@
 # import os
 import os
+from typing import Union
 
 import httpx
 from fastapi.encoders import jsonable_encoder
@@ -68,7 +69,7 @@ async def insert_single_item(data: ItemInsertSchema, access_token: str) -> Succe
     return response.json()
 
 
-async def fetch_current_user_from_back_end(access_token: str) -> User:
+async def fetch_current_user_from_back_end(access_token: str) -> Union[User, None]:
     headers = {
         'content-type': 'application/json',
         'Authorization': "Bearer {token}".format(token=access_token)
@@ -77,6 +78,7 @@ async def fetch_current_user_from_back_end(access_token: str) -> User:
     response = await httpx_async_client.get(
         url="{back_end_url}/private/account".format(back_end_url=os.getenv("BACK_END_URL")),
         headers=headers)
+    print(response.json())
     return response.json()
 
 

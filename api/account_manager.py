@@ -16,4 +16,4 @@ router = APIRouter(
 
 @router.get("/account", tags=["account"])
 async def account(user_data: typing.Any = Depends(check_http_cookies)):
-    return await fetch_current_user_from_back_end(access_token=user_data.access_token)
+    return await fetch_current_user_from_back_end(access_token=user_data.get("access_token"))

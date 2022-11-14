@@ -36,13 +36,13 @@ async def fetch_authorization_artefact_by_session_token(session_token: str) -> t
 
 
 async def fetch_authorization_artefact_by_ext_id(ext_id: str, session_token: str) -> typing.Any:
-    query = """SELECT * FROM authorization_artefacts WHERE user_id = :ext_id AND session_token = :session_token LIMIT 
-    1 """
+    query = """SELECT user_id, is_destroyed, access_token FROM authorization_artefacts WHERE user_id = :ext_id 
+    AND session_token = :session_token """
     values = {
         "ext_id": ext_id,
         "session_token": session_token
     }
-    result = await database.execute(query=query, values=values)
+    result = await database.fetch_one(query=query, values=values)
     return result
 
 
