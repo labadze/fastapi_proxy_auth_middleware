@@ -27,7 +27,6 @@ Described here:
 ## Environment variables
 First set following env variables:
 
-    DATABASE_URL=postgresql+asyncpg://<username>:<password>@127.0.0.1:5432/<database_name>
     JWT_ISSUER=
     JWT_KEY=
     JWT_KID=
@@ -42,14 +41,6 @@ First set following env variables:
  - Make sure that you've created database and have full access to it.
  - For unix type systems use `export` for MS Windows use `SET` before variable values
 
-## Run migrations to create required tables in your database
-
-Make sure that your database server is running
-
-Run:
- - `alembic upgrade head`
-
-This will create required tables and required relations
 
 ## Run your application
 
