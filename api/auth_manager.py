@@ -1,15 +1,16 @@
 import base64
 from typing import Union
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, HTTPException
 from fastapi.encoders import jsonable_encoder
 from starlette import status
 from starlette.responses import Response, JSONResponse
 
-from core.httpx_processor import end_session
+from core.httpx_processor import end_session, fetch_current_user_from_back_end
 from core.ipd_config import idp
-from core.schemas import JWTProperties
-from core.utils import sign_jwt, decode_back_end_token
+from core.schemas import JWTProperties, InsertArtefactSchema
+from core.utils import sign_jwt
+from db.db_ops import insert_authorization_artefact, fetch_authorization_artefact_by_access_token
 
 router = APIRouter(
     prefix="/public",
@@ -36,37 +37,58 @@ def login_redirect():
 async def callback(session_state: str, code: str, response: Response):
     try:
         exchange_result = idp.exchange_authorization_code(session_state=session_state, code=code)
-        print(exchange_result)
-        # TODO decode token at back-end
-        # Store token in database
-        # Generate session token with inserted id
-        # Update value in database
-        await decode_back_end_token(encoded=str(exchange_result).replace("Bearer ", ""))
-
         if exchange_result is not None:
-            response.status_code = status.HTTP_201_CREATED
-            jwt_props = JWTProperties(
-                user_id="uno",
-                user_role="root",
-                audience="user",
-                expires_in=60 * 8
+            in_db = await fetch_authorization_artefact_by_access_token(access_token=str(exchange_result)
+                                                                       .replace("Bearer ", ""))
+            if len(in_db) == 0 or in_db is None:
+                # decode token at back-end
+                current_user_result = await fetch_current_user_from_back_end(
+                    access_token=str(exchange_result).replace("Bearer ", ""))
+                if current_user_result.ext_id is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Invalid token",
+                        headers={"WWW-Authenticate": "Bearer"},
+                    )
+                else:
+                    response.status_code = status.HTTP_201_CREATED
+                    jwt_props = JWTProperties(
+                        user_id=current_user_result.ext_id,
+                        user_role=str(current_user_result.roles),
+                        audience="user",
+                        expires_in=60 * 8
+                    )
+                    # Generate session token with inserted id
+                    token = await sign_jwt(properties=jwt_props)
+                    # Store token in database
+                    db_data = InsertArtefactSchema(
+                        user_id=current_user_result.ext_id,
+                        is_destroyed=False,
+                        session_token=token,
+                        access_token=str(exchange_result).replace("Bearer ", "")
+                    )
+                    await insert_authorization_artefact(data=db_data)
+                    response = JSONResponse(content={
+                        "success": True
+                    })
+                    response.set_cookie(
+                        key="session_key",
+                        value=token,
+                        httponly=True,
+                        secure=True,
+                        samesite="none",
+                        max_age=1800,
+                        expires=1800,
+                        path='/',
+                        domain=None
+                    )
+                    return response
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"},
             )
-            token = await sign_jwt(properties=jwt_props)
-            response = JSONResponse(content={
-                "success": True
-            })
-            response.set_cookie(
-                key="session_key",
-                value=token,
-                httponly=True,
-                secure=True,
-                samesite="none",
-                max_age=1800,
-                expires=1800,
-                path='/',
-                domain=None
-            )
-            return response
     except Exception as e:
         print(e)
         response.status_code = status.HTTP_401_UNAUTHORIZED
@@ -82,7 +104,7 @@ async def delete_cookie(response: Response, keycloak_log_out_encoded_uri: Union[
     response = JSONResponse(content={
         "success": True
     })
-    await end_session(logout_url=base64.b64encode(keycloak_log_out_encoded_uri.encode('utf-8')).decode("utf-8"))
+    # await end_session(logout_url=base64.b64encode(keycloak_log_out_encoded_uri.encode('utf-8')).decode("utf-8"))
     return response
 
 
