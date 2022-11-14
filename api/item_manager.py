@@ -33,12 +33,12 @@ async def update_item(item_id: str, body: ItemBodySchema, user_data: typing.Any 
         rate=body.rate,
         carma=body.carma,
     )
-    return await update_single_item(item_id=item_id, data=update_data, access_token=user_data.access_token)
+    return await update_single_item(item_id=item_id, data=update_data, access_token=user_data.get("access_token"))
 
 
 @router.delete("/items/{item_id}", tags=["items"], response_model=SuccessResponseSchema, status_code=200)
 async def delete_item(item_id: str, user_data: typing.Any = Depends(check_http_cookies)):
-    await delete_single_item(item_id=item_id, access_token=user_data.access_token)
+    await delete_single_item(item_id=item_id, access_token=user_data.get("access_token"))
     return {
         "success": True,
         "message": "Item was deleted successfully"
@@ -54,4 +54,4 @@ async def insert_item(body: ItemBodySchema, user_data: typing.Any = Depends(chec
         carma=body.carma,
         user_id=user_data.user_id
     )
-    return await insert_single_item(data=item_insert_data, access_token=user_data.access_token)
+    return await insert_single_item(data=item_insert_data, access_token=user_data.get("access_token"))
