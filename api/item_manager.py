@@ -17,12 +17,12 @@ router = APIRouter(
 
 @router.get("/items", tags=["items"], response_model=list[ItemResponseCollectionBase], status_code=200)
 async def retrieve_items(limit: int, offset: int, user_data: typing.Any = Depends(check_http_cookies)):
-    return await retrieve_item_list(limit=limit, offset=offset, access_token=user_data.access_token)
+    return await retrieve_item_list(limit=limit, offset=offset, access_token=user_data.get("access_token"))
 
 
 @router.get("/items/{item_id}", tags=["items"], response_model=ItemResponseCollectionBase, status_code=200)
 async def fetch_item(item_id: str, user_data: typing.Any = Depends(check_http_cookies)):
-    return await fetch_single_item(item_id=item_id, access_token=user_data.access_token)
+    return await fetch_single_item(item_id=item_id, access_token=user_data.get("access_token"))
 
 
 @router.put("/items/{item_id}", tags=["items"], response_model=ItemResponseCollectionBase, status_code=200)
