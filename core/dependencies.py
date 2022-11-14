@@ -14,7 +14,7 @@ async def check_http_cookies(session_key: Union[str, None] = Cookie(None)):
         'verify_exp': False,  # Skipping expiration date check
         'verify_aud': False
     }
-    decoded_jwt_result = jwt.decode(token=session_key, key=os.getenv("JWT_KEY"), algorithms=["HS512"], options=options)
+    decoded_jwt_result = jwt.decode(jwt=session_key, key=os.getenv("JWT_KEY"), algorithms=["HS512"], options=options)
     storage_result = await fetch_authorization_artefact_by_ext_id(ext_id=decoded_jwt_result.get("sub"),
                                                                   session_token=session_key)
     if storage_result is None or len(storage_result) == 0:
