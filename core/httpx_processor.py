@@ -18,7 +18,8 @@ async def retrieve_item_list(limit: int, offset: int, access_token: str) -> list
     }
     params = {'limit': limit, 'offset': offset}
     response = await httpx_async_client.get(
-        url="{back_end_url}/protected/items".format(back_end_url=os.getenv("BACK_END_URL")),
+        url="{back_end_url}/protected/items".format(
+            back_end_url=os.getenv("BACK_END_URL", default="http://127.0.0.1:8000")),
         headers=headers, params=params)
     return response.json()
 
@@ -29,7 +30,8 @@ async def fetch_single_item(item_id: str, access_token: str) -> ItemResponseColl
         'Authorization': "Bearer {token}".format(token=access_token)
     }
     response = await httpx_async_client.get(url="{back_end_url}/protected/items/{item_id}"
-                                            .format(back_end_url=os.getenv("BACK_END_URL"), item_id=item_id),
+                                            .format(
+        back_end_url=os.getenv("BACK_END_URL", default="http://127.0.0.1:8000"), item_id=item_id),
                                             headers=headers)
     return response.json()
 
@@ -40,7 +42,8 @@ async def delete_single_item(item_id: str, access_token: str) -> SuccessResponse
         'Authorization': "Bearer {token}".format(token=access_token)
     }
     response = await httpx_async_client.delete(url="{back_end_url}/protected/items/{item_id}"
-                                               .format(back_end_url=os.getenv("BACK_END_URL"), item_id=item_id),
+                                               .format(
+        back_end_url=os.getenv("BACK_END_URL", default="http://127.0.0.1:8000"), item_id=item_id),
                                                headers=headers)
     return response.json()
 
@@ -52,7 +55,8 @@ async def update_single_item(item_id: str, data: ItemBodySchema, access_token: s
     }
     body_json = jsonable_encoder(data)
     response = await httpx_async_client.put(url="{back_end_url}/protected/items/{item_id}"
-                                            .format(back_end_url=os.getenv("BACK_END_URL"), item_id=item_id),
+                                            .format(
+        back_end_url=os.getenv("BACK_END_URL", default="http://127.0.0.1:8000"), item_id=item_id),
                                             headers=headers, json=body_json)
     return response.json()
 
@@ -64,7 +68,8 @@ async def insert_single_item(data: ItemInsertSchema, access_token: str) -> Succe
     }
     body_json = jsonable_encoder(data)
     response = await httpx_async_client.post(url="{back_end_url}/protected/items"
-                                             .format(back_end_url=os.getenv("BACK_END_URL")),
+                                             .format(
+        back_end_url=os.getenv("BACK_END_URL", default="http://127.0.0.1:8000")),
                                              headers=headers, json=body_json)
     return response.json()
 
@@ -76,9 +81,10 @@ async def fetch_current_user_from_back_end(access_token: str) -> Union[User, Non
     }
 
     response = await httpx_async_client.get(
-        url="{back_end_url}/private/account".format(back_end_url=os.getenv("BACK_END_URL")),
+        url="{back_end_url}/private/account".format(
+            back_end_url=os.getenv("BACK_END_URL", default="http://127.0.0.1:8000")),
         headers=headers)
-    print(response.json())
+    os.getenv("BACK_END_URL")
     return response.json()
 
 
@@ -87,8 +93,9 @@ async def end_session(access_token: str, user_id: str) -> SuccessResponseSchema:
         'content-type': 'application/json',
         'Authorization': "Bearer {token}".format(token=access_token)
     }
-
     response = await httpx_async_client.get(
-        url="{back_end_url}/private/account/destroy_token/{user_id}".format(back_end_url=os.getenv("BACK_END_URL"),
+        url="{back_end_url}/private/account/destroy_token/{user_id}".format(back_end_url=
+                                                                            os.getenv("BACK_END_URL",
+                                                                                      default="http://127.0.0.1:8000"),
                                                                             user_id=user_id), headers=headers)
     return response.json()

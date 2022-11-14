@@ -6,8 +6,6 @@ import jwt
 from fastapi import Cookie, HTTPException
 from starlette import status
 
-from db.db_ops import fetch_authorization_artefact_by_ext_id
-
 
 async def check_http_cookies(session_key: Union[str, None] = Cookie(None)):
     print(session_key)
