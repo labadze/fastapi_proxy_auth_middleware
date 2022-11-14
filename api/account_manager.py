@@ -1,5 +1,9 @@
+from typing import Union
+
 from fastapi import APIRouter, Depends
+from fastapi.params import Header
 from pydantic import typing
+from starlette.responses import Response, JSONResponse
 
 from core.dependencies import check_http_cookies
 from core.httpx_processor import fetch_current_user_from_back_end
@@ -17,3 +21,24 @@ router = APIRouter(
 @router.get("/account", tags=["account"])
 async def account(user_data: typing.Any = Depends(check_http_cookies)):
     return await fetch_current_user_from_back_end(access_token=user_data.get("access_token"))
+
+
+@router.delete("/account/delete_cookie", tags=["auth-flow"])
+async def delete_cookie(response: Response, keycloak_log_out_encoded_uri: Union[str, None] = Header(default=None)):
+    # response.delete_cookie(key="session_key", path='/', domain=None)
+    response.set_cookie(
+        key="session_key",
+        value='None',
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=10,
+        expires=10,
+        path='/',
+        domain=None
+    )
+    response = JSONResponse(content={
+        "success": True
+    })
+    # await end_session(logout_url=base64.b64encode(keycloak_log_out_encoded_uri.encode('utf-8')).decode("utf-8"))
+    return response

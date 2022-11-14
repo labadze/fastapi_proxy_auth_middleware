@@ -74,6 +74,17 @@ async def callback(session_state: str, code: str, response: Response):
 @router.delete("/delete_cookie", tags=["auth-flow"])
 async def delete_cookie(response: Response, keycloak_log_out_encoded_uri: Union[str, None] = Header(default=None)):
     response.delete_cookie(key="session_key", path='/', domain=None)
+    response.set_cookie(
+        key="session_key",
+        value='None',
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=10,
+        expires=10,
+        path='/',
+        domain=None
+    )
     response = JSONResponse(content={
         "success": True
     })
