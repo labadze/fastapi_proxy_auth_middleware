@@ -7,7 +7,7 @@ from core.httpx_processor import fetch_current_user_from_back_end
 router = APIRouter(
     prefix="/private",
     tags=["account"],
-    dependencies=[Depends(check_http_cookies)],
+    # dependencies=[Depends(check_http_cookies)],
     responses={404: {"description": "Not found"}},
 )
 

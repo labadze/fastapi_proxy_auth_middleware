@@ -15,7 +15,6 @@ from db.db_ops import insert_authorization_artefact, fetch_authorization_artefac
 router = APIRouter(
     prefix="/public",
     tags=["auth-flow"],
-    # dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )
 
@@ -37,24 +36,27 @@ def login_redirect():
 async def callback(session_state: str, code: str, response: Response):
     try:
         exchange_result = idp.exchange_authorization_code(session_state=session_state, code=code)
+        # print(exchange_result)
         if exchange_result is not None:
             in_db = await fetch_authorization_artefact_by_access_token(access_token=str(exchange_result)
                                                                        .replace("Bearer ", ""))
-            if len(in_db) == 0 or in_db is None:
+            if in_db is None:
                 # decode token at back-end
                 current_user_result = await fetch_current_user_from_back_end(
                     access_token=str(exchange_result).replace("Bearer ", ""))
-                if current_user_result.ext_id is None:
+                print(current_user_result)
+                if current_user_result is None:
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail="Invalid token",
                         headers={"WWW-Authenticate": "Bearer"},
                     )
                 else:
+                    print(current_user_result.get("ext_id"))
                     response.status_code = status.HTTP_201_CREATED
                     jwt_props = JWTProperties(
-                        user_id=current_user_result.ext_id,
-                        user_role=str(current_user_result.roles),
+                        user_id=current_user_result.get("ext_id"),
+                        user_role=str(current_user_result.get("roles")),
                         audience="user",
                         expires_in=60 * 8
                     )
@@ -62,7 +64,7 @@ async def callback(session_state: str, code: str, response: Response):
                     token = await sign_jwt(properties=jwt_props)
                     # Store token in database
                     db_data = InsertArtefactSchema(
-                        user_id=current_user_result.ext_id,
+                        user_id=current_user_result.get("ext_id"),
                         is_destroyed=False,
                         session_token=token,
                         access_token=str(exchange_result).replace("Bearer ", "")

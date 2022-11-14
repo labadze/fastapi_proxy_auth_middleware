@@ -10,7 +10,7 @@ from core.schemas import ItemInsertSchema, ItemBodySchema, ItemResponseCollectio
 router = APIRouter(
     prefix="/protected",
     tags=["items"],
-    dependencies=[Depends(check_http_cookies)],
+    # dependencies=[Depends(check_http_cookies)],
     responses={404: {"description": "Not found"}},
 )
 
