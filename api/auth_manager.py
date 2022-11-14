@@ -58,18 +58,11 @@ async def callback(session_state: str, code: str, response: Response):
                         user_id=current_user_result.get("ext_id"),
                         user_role=str(current_user_result.get("roles")),
                         audience="user",
-                        expires_in=60 * 8
+                        expires_in=60 * 8,
+                        access_token=str(exchange_result).replace("Bearer ", "")
                     )
                     # Generate session token with inserted id
                     token = await sign_jwt(properties=jwt_props)
-                    # Store token in database
-                    db_data = InsertArtefactSchema(
-                        user_id=current_user_result.get("ext_id"),
-                        is_destroyed=False,
-                        session_token=token,
-                        access_token=str(exchange_result).replace("Bearer ", "")
-                    )
-                    await insert_authorization_artefact(data=db_data)
                     response = JSONResponse(content={
                         "success": True
                     })

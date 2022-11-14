@@ -1,5 +1,3 @@
-from typing import Union
-
 from pydantic import BaseModel, typing
 
 
@@ -17,6 +15,7 @@ class JWTProperties(BaseModel):
     user_role: str
     audience: str
     expires_in: int = 60 * 8
+    access_token: str
 
 
 class InsertArtefactSchema(BaseModel):

@@ -1,11 +1,9 @@
-from typing import Union, Dict
+from typing import Union
 
 from fastapi import FastAPI
-from fastapi.params import Cookie
 from starlette.middleware.cors import CORSMiddleware
 
 from api import auth_manager, item_manager, account_manager
-from core.database import database
 
 app = FastAPI()
 
@@ -32,12 +30,3 @@ async def root() -> dict[str, Union[str, None, bool]]:
         "success": True
     }
 
-
-@app.on_event("startup")
-async def connect_db():
-    await database.connect()
-
-
-@app.on_event("shutdown")
-async def connect_db():
-    await database.disconnect()
