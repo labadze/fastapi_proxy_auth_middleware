@@ -30,8 +30,14 @@ async def delete_cookie(response: Response, user_data: typing.Any = Depends(chec
     response = JSONResponse(content={
         "success": True
     })
-    response.delete_cookie(key="session_key", path='/', domain=None)
-    response.delete_cookie(key="session_key", domain=None)
+    response.delete_cookie(
+        key="session_state",
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path='/',
+        domain=None
+    )
     response.set_cookie(
         key="session_state",
         value='deleted',
@@ -43,5 +49,4 @@ async def delete_cookie(response: Response, user_data: typing.Any = Depends(chec
         path='/',
         domain=None
     )
-    # await end_session(logout_url=base64.b64encode(keycloak_log_out_encoded_uri.encode('utf-8')).decode("utf-8"))
     return response

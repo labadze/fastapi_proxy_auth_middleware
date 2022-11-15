@@ -61,7 +61,7 @@ async def callback(session_state: str, code: str, response: Response):
             samesite='none',
             max_age=1800,
             expires=1800,
-            # path='/',
+            path='/',
             domain=None
         )
         return response
@@ -80,8 +80,14 @@ async def delete_cookie(response: Response, user_data: typing.Any = Depends(chec
     response = JSONResponse(content={
         "success": True
     })
-    response.delete_cookie(key="session_key", path='/', domain=None)
-    response.delete_cookie(key="session_key", domain=None)
+    response.delete_cookie(
+        key="session_state",
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path='/',
+        domain=None
+    )
     response.set_cookie(
         key="session_state",
         value='deleted',
