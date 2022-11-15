@@ -14,6 +14,12 @@ async def check_http_cookies(session_state: Union[str, None] = Cookie(None)):
             detail="Unauthorized...",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    elif session_state == 'deleted':
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized...",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     else:
         options = {
             'verify_signature': False,
