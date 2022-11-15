@@ -2,6 +2,7 @@ from typing import Union
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import Response, JSONResponse
 
 from api import auth_manager, item_manager, account_manager
 
@@ -24,9 +25,20 @@ app.include_router(account_manager.router)
 
 
 @app.get("/")
-async def root() -> dict[str, Union[str, None, bool]]:
-    return {
-        "session_key": 'session_key',
+async def root(response: Response) -> JSONResponse:
+    response = JSONResponse(content={
         "success": True
-    }
+    })
+    # response.set_cookie(
+    #     key="session_state",
+    #     value='deleted',
+    #     httponly=True,
+    #     secure=True,
+    #     samesite='none',
+    #     max_age=4,
+    #     expires=3,
+    #     path='/',
+    #     domain=None
+    # )
+    return response
 

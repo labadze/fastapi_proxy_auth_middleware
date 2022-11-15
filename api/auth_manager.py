@@ -1,10 +1,13 @@
+import datetime
 from typing import Union
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Depends
 from fastapi.encoders import jsonable_encoder
+from pydantic import typing
 from starlette import status
 from starlette.responses import Response, JSONResponse
 
+from core.dependencies import check_http_cookies
 from core.httpx_processor import fetch_current_user_from_back_end
 from core.ipd_config import idp
 from core.schemas import JWTProperties
@@ -34,10 +37,13 @@ def login_redirect():
 async def callback(session_state: str, code: str, response: Response):
     try:
         exchange_result = idp.exchange_authorization_code(session_state=session_state, code=code)
-        # print(exchange_result)
-        current_user_result = await fetch_current_user_from_back_end(access_token=str(exchange_result).replace("Bearer ", ""))
-        print(current_user_result.get("ext_id"))
+        current_user_result = await fetch_current_user_from_back_end(
+            access_token=str(exchange_result).replace("Bearer ", ""))
         response.status_code = status.HTTP_201_CREATED
+        response = JSONResponse(content={
+            "success": True,
+            "data": current_user_result
+        })
         jwt_props = JWTProperties(
             user_id=current_user_result.get("ext_id"),
             user_role=str(current_user_result.get("roles")),
@@ -47,18 +53,15 @@ async def callback(session_state: str, code: str, response: Response):
         )
         # Generate session token with inserted id
         token = await sign_jwt(properties=jwt_props)
-        response = JSONResponse(content={
-            "success": True
-        })
         response.set_cookie(
-            key="session_key",
+            key="session_state",
             value=token,
             httponly=True,
             secure=True,
-            samesite="none",
+            samesite='none',
             max_age=1800,
             expires=1800,
-            path='/',
+            # path='/',
             domain=None
         )
         return response
@@ -72,22 +75,24 @@ async def callback(session_state: str, code: str, response: Response):
 
 
 @router.delete("/delete_cookie", tags=["auth-flow"])
-async def delete_cookie(response: Response, keycloak_log_out_encoded_uri: Union[str, None] = Header(default=None)):
-    response.delete_cookie(key="session_key", path='/', domain=None)
-    response.set_cookie(
-        key="session_key",
-        value='None',
-        httponly=True,
-        secure=True,
-        samesite="none",
-        max_age=10,
-        expires=10,
-        path='/',
-        domain=None
-    )
+async def delete_cookie(response: Response, user_data: typing.Any = Depends(check_http_cookies),
+                        keycloak_log_out_encoded_uri: Union[str, None] = Header(default=None)):
     response = JSONResponse(content={
         "success": True
     })
+    response.delete_cookie(key="session_key", path='/', domain=None)
+    response.delete_cookie(key="session_key", domain=None)
+    response.set_cookie(
+        key="session_state",
+        value='deleted',
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=4,
+        expires=3,
+        path='/',
+        domain=None
+    )
     # await end_session(logout_url=base64.b64encode(keycloak_log_out_encoded_uri.encode('utf-8')).decode("utf-8"))
     return response
 

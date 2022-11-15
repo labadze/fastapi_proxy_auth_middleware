@@ -8,7 +8,6 @@ from starlette import status
 
 
 async def check_http_cookies(session_key: Union[str, None] = Cookie(None)):
-    print(session_key)
     if session_key is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -25,6 +24,7 @@ async def check_http_cookies(session_key: Union[str, None] = Cookie(None)):
                                         options=options)
         decoded_ext_id = base64.b64decode(decoded_jwt_result.get("sub")).decode('utf-8')
         return {
+            "session_token": session_key,
             "user_id": decoded_ext_id,
             "access_token": base64.b64decode(decoded_jwt_result.get("access_token")).decode('utf-8'),
         }

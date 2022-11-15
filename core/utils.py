@@ -18,7 +18,6 @@ async def sign_jwt(properties: JWTProperties):
         "sub": base64.b64encode(properties.user_id.encode('utf-8')).decode("utf-8"),
         "aud": base64.b64encode(properties.audience.encode('utf-8')).decode("utf-8"),
         "iat": datetime.datetime.now(tz=datetime.timezone.utc),
-        "u_identifier": properties.user_id,
         "user_role": properties.user_role,
         "access_token": base64.b64encode(properties.access_token.encode('utf-8')).decode("utf-8"),
     },
